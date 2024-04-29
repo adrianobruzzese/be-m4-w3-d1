@@ -1,0 +1,86 @@
+-- Utilizzo di pgAdmin 4 per creare le tabelle, ma di seguito il codice SQL per la creazione da console.
+
+-- Creazione della tabella Fatture
+-- Considerata gerarchicamente superiore; unica con relazioni univoche con le altre tabelle.
+CREATE TABLE IF NOT EXISTS Fatture (
+    NumeroFattura SERIAL PRIMARY KEY,
+    Tipologia VARCHAR(255),
+    Importo DECIMAL(10,2),
+    Iva DECIMAL(10,2),
+    IdCliente INTEGER,
+    DataFattura DATE,
+    NumeroFornitore INTEGER,
+    CONSTRAINT fk_cliente FOREIGN KEY (IdCliente) REFERENCES Clienti (NumeroCliente),
+    CONSTRAINT fk_fornitore FOREIGN KEY (NumeroFornitore) REFERENCES Fornitori (NumeroFornitore)
+);
+
+-- Creazione tabella Clienti
+CREATE TABLE IF NOT EXISTS Clienti (
+    NumeroCliente SERIAL PRIMARY KEY,
+    Nome VARCHAR(255),
+    Cognome VARCHAR(255),
+    AnnoDiNascita INTEGER,
+    RegioneResidenza VARCHAR(255)
+);
+
+-- Creazione tabella Prodotti
+CREATE TABLE IF NOT EXISTS Prodotti (
+    IdProdotto SERIAL PRIMARY KEY,
+    Descrizione VARCHAR(255),
+    InProduzione BOOLEAN, 
+    InCommercio BOOLEAN,
+    DataAttivazione DATE,
+    DataDisattivazione DATE
+);
+
+-- Creazione della tabella Fornitori
+CREATE TABLE IF NOT EXISTS Fornitori (
+    NumeroFornitore SERIAL PRIMARY KEY,
+    Denominazione VARCHAR(255),
+    RegioneResidenza VARCHAR(255)
+);
+
+-- Inserimento di dati iniziali per i Clienti
+INSERT INTO Clienti (Nome, Cognome, AnnoDiNascita, RegioneResidenza)
+VALUES 
+    ('Mario', 'Rossi', 1989, 'LZ'),
+    ('Giuseppe', 'Russo', 1990, 'LB'), 
+    ('Maria', 'Ferrari', 1991, 'BZ'), 
+    ('Anna', 'Esposito', 1991, 'AP'), 
+    ('Antonio', 'Bianchi', 1992, 'SD');
+
+-- Query per estrazione clienti di nome 'Mario'
+SELECT * FROM Clienti
+WHERE Nome = 'Mario'
+ORDER BY NumeroCliente ASC;
+
+-- Inserimento di dati aggiuntivi e query per clienti nati nel 1992
+INSERT INTO Clienti (Nome, Cognome, AnnoDiNascita, RegioneResidenza)
+VALUES 
+    ('Luigi', 'Neri', 1982, 'LZ'),
+    ('Annamaria', 'Risi', 1982, 'LB');
+
+SELECT Nome, Cognome FROM Clienti
+WHERE AnnoDiNascita = 1982
+ORDER BY NumeroCliente ASC;
+
+-- Query per il conteggio delle fatture con IVA al 20%
+SELECT COUNT(*) FROM Fatture
+WHERE Iva = 20.0;
+
+-- Inserimento di dati nei Prodotti e query per prodotti attivati nel 2017, ancora in produzione o in commercio
+INSERT INTO Prodotti (Descrizione, InProduzione, InCommercio, DataAttivazione, DataDisattivazione)
+VALUES 
+    ('Prodotto A', true, true, '2017-01-15', NULL),
+    ('Prodotto B', false, false, '2017-02-20', '2019-03-30'),
+    ('Prodotto C', false, true, '2017-03-25', NULL),
+    ('Prodotto D', true, true, '2020-04-10', '2022-05-15'), -- non sarà selezionato
+    ('Prodotto E', false, false, '2017-05-30', NULL),
+    ('Prodotto F', true, true, '2018-06-05', '2023-07-20'), -- non sarà selezionato
+    ('Prodotto G', false, true, '2018-08-15', NULL), -- non sarà selezionato
+    ('Prodotto H', true, true, '2017-09-10', '2020-10-12'),
+    ('Prodotto I', false, false, '2014-11-25', NULL); -- non sarà selezionato
+
+SELECT * FROM Prodotti
+WHERE EXTRACT(YEAR FROM DataAttivazione) = 2017
+AND (InProduzione = true OR InCommercio = true);
